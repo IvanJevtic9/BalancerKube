@@ -1,4 +1,4 @@
-﻿namespace BalancerKube.Wallet.Domain.ValueObjects
+﻿namespace BalancerKube.Wallet.Domain.Common
 {
     public readonly record struct Money : IComparable<Money>
     {

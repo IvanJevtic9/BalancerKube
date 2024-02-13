@@ -1,4 +1,4 @@
-﻿namespace BalancerKube.Wallet.Domain.ValueObjects
+﻿namespace BalancerKube.Wallet.Domain.Common
 {
     public record struct Currency(string Symbol)
     {

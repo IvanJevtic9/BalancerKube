@@ -1,5 +1,5 @@
-﻿using BalancerKube.Wallet.Domain.Abstraction;
-using BalancerKube.Wallet.Domain.ValueObjects;
+﻿using BalancerKube.Wallet.Domain.Common;
+using BalancerKube.Wallet.Domain.Abstraction;
 
 namespace BalancerKube.Domain.Entities
 {
@@ -22,7 +22,10 @@ namespace BalancerKube.Domain.Entities
         private Currency Currency { get; set; } // Used by EF Core
 
         private Transaction() : base(Guid.NewGuid()) { } // Used by EF Core
+        private Transaction(int userId, int walletId, Money amount, string? code = null) : base(Guid.NewGuid()) =>
+            (UserId, WalletId, Price, Code) = (userId, walletId, amount, code);
 
-        internal static Transaction Create() => default;
+        internal static Transaction Create(int userId, int walletId, Money amount, string? code = null) => 
+            new Transaction(userId, walletId, amount, code);
     }
 }

@@ -9,17 +9,17 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["BalancerKube.Wallet.csproj", "."]
-RUN dotnet restore "./././BalancerKube.Wallet.csproj"
+COPY ["BalancerKube.Wallet.API.csproj", "."]
+RUN dotnet restore "./././BalancerKube.Wallet.API.csproj"
 COPY . .
 WORKDIR "/src/."
-RUN dotnet build "./BalancerKube.Wallet.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./BalancerKube.Wallet.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./BalancerKube.Wallet.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./BalancerKube.Wallet.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "BalancerKube.Wallet.dll"]
+ENTRYPOINT ["dotnet", "BalancerKube.Wallet.API.dll"]
