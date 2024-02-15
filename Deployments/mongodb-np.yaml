@@ -1,0 +1,14 @@
+# event-generator-nodeport.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-srv
+spec:
+  type: NodePort
+  selector:
+    app: mongodb
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
+      nodePort: 32017

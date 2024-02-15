@@ -96,6 +96,10 @@ namespace BalancerKube.Wallets.API.Persistence
                 .HasIndex(t => new { t.Id, t.UserId, t.WalletId });
 
             modelBuilder.Entity<Transaction>()
+                .Property(t => t.CorrelationId)
+                .IsRequired();
+
+            modelBuilder.Entity<Transaction>()
                 .Property(t => t.UserBalance)
                 .HasColumnType("decimal(18, 2)")
                 .IsRequired();

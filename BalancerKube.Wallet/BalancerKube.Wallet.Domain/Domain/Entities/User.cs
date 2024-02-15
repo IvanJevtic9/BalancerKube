@@ -18,7 +18,7 @@ namespace BalancerKube.Domain.Entities
         public static User Create(string username, string? city = null, string? address = null) =>
             new User(username, city, address);
 
-        public Transaction AddTransaction(string code, Money transactionAmount)
+        public Transaction AddTransaction(Guid correlationId, Money transactionAmount)
         {
             if (Wallets.Any(x => x.WalletBalance.Currency == transactionAmount.Currency))
             {
@@ -26,12 +26,12 @@ namespace BalancerKube.Domain.Entities
                     x.WalletBalance.Currency == transactionAmount.Currency);
 
                 existingWallet?.AddTransaction(
-                    Transaction.Create(Id, existingWallet.Id, transactionAmount, code));
+                    Transaction.Create(Id, existingWallet.Id, transactionAmount, correlationId));
             }
 
             var wallet = Wallet.Create(Id, new Money(0, transactionAmount.Currency));
 
-            var transaction = Transaction.Create(Id, wallet.Id, transactionAmount, code);
+            var transaction = Transaction.Create(Id, wallet.Id, transactionAmount, correlationId);
             wallet.AddTransaction(transaction);
 
             return transaction;

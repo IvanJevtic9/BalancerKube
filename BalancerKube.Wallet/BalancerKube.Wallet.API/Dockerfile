@@ -1,5 +1,7 @@
 #See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
+# docker build -t wallet-service -f .\BalancerKube.Wallet.API\Dockerfile .
+
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER app
 WORKDIR /app
@@ -8,11 +10,14 @@ EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
+
 WORKDIR /src
-COPY ["BalancerKube.Wallet.API.csproj", "."]
-RUN dotnet restore "./././BalancerKube.Wallet.API.csproj"
+COPY ["BalancerKube.Wallet.Domain/BalancerKube.Wallet.Domain.csproj", "BalancerKube.Wallet.Domain/"]
+COPY ["BalancerKube.Wallet.API/BalancerKube.Wallet.API.csproj", "BalancerKube.Wallet.API/"]
+RUN dotnet restore "./BalancerKube.Wallet.API/./BalancerKube.Wallet.API.csproj"
+
 COPY . .
-WORKDIR "/src/."
+WORKDIR "/src/BalancerKube.Wallet.API"
 RUN dotnet build "./BalancerKube.Wallet.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish

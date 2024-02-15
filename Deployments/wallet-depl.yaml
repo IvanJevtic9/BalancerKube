@@ -1,0 +1,33 @@
+# wallet-service-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wallet-service-deployment
+  labels:
+    app: wallet-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wallet-service
+  template:
+    metadata:
+      labels:
+        app: wallet-service
+    spec:
+      containers:
+      - name: wallet-service
+        image: webdeveloper95/wallet-service:latest
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wallet-clusterip-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: wallet-service
+  ports:
+    - port: 8080
+      targetPort: 8080

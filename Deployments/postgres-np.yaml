@@ -1,0 +1,14 @@
+# postgres-nodeport.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-srv
+spec:
+  type: NodePort
+  selector:
+    app: postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+      nodePort: 30007 # Optionally specify a nodePort in the range 30000-32767 or leave it out for an auto-assigned port

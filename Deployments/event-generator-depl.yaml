@@ -1,0 +1,33 @@
+# wallet-service-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: event-generator-service-deployment
+  labels:
+    app: event-generator-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: event-generator-service
+  template:
+    metadata:
+      labels:
+        app: event-generator-service
+    spec:
+      containers:
+      - name: event-generator-service
+        image: webdeveloper95/event-generator-service:latest
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: event-generator-clusterip-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: event-generator-service
+  ports:
+    - port: 8080
+      targetPort: 8080

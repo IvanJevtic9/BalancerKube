@@ -1,0 +1,13 @@
+# event-generator-nodeport.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: event-generator-srv
+spec:
+  type: NodePort
+  selector:
+    app: event-generator
+  ports:
+    - port: 8080
+      targetPort: 8080
+      #nodePort: 31000  # Optionally specify a nodePort here, or leave it out for Kubernetes to assign one
