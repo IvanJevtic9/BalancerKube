@@ -20,18 +20,23 @@ namespace BalancerKube.Domain.Entities
 
         public Transaction AddTransaction(Guid correlationId, Money transactionAmount)
         {
+            Transaction transaction;
+
             if (Wallets.Any(x => x.WalletBalance.Currency == transactionAmount.Currency))
             {
                 var existingWallet = Wallets.FirstOrDefault(x =>
                     x.WalletBalance.Currency == transactionAmount.Currency);
 
-                existingWallet?.AddTransaction(
-                    Transaction.Create(Id, existingWallet.Id, transactionAmount, correlationId));
+                transaction = Transaction.Create(this, existingWallet, transactionAmount, correlationId);
+
+                existingWallet?.AddTransaction(transaction);
+
+                return transaction;
             }
 
             var wallet = Wallet.Create(Id, new Money(0, transactionAmount.Currency));
 
-            var transaction = Transaction.Create(Id, wallet.Id, transactionAmount, correlationId);
+            transaction = Transaction.Create(this, wallet, transactionAmount, correlationId);
             wallet.AddTransaction(transaction);
 
             return transaction;

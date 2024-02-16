@@ -22,10 +22,10 @@ namespace BalancerKube.Domain.Entities
         private Currency Currency { get; set; } // Used by EF Core
 
         private Transaction() : base(Guid.NewGuid()) { } // Used by EF Core
-        private Transaction(int userId, int walletId, Money amount, Guid correlationId) : base(Guid.NewGuid()) =>
-            (UserId, WalletId, Price, CorrelationId) = (userId, walletId, amount, correlationId);
+        private Transaction(User user, Wallet wallet, Money amount, Guid correlationId) : base(Guid.NewGuid()) =>
+            (User, Wallet, Price, UserBalance, CorrelationId) = (user, wallet, amount, wallet.WalletBalance.Amount + amount.Amount, correlationId);
 
-        internal static Transaction Create(int userId, int walletId, Money amount, Guid correlationId) => 
-            new Transaction(userId, walletId, amount, correlationId);
+        internal static Transaction Create(User user, Wallet wallet, Money amount, Guid correlationId) =>
+            new Transaction(user, wallet, amount, correlationId);
     }
 }

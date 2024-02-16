@@ -25,7 +25,14 @@ namespace BalancerKube.Domain.Entities
         internal static Wallet Create(int userId, Money initialBalance) =>  
             new Wallet(userId, initialBalance);
 
-        public void AddTransaction(Transaction transaction) =>
+        public void AddTransaction(Transaction transaction) 
+        {
+            if (transaction.Price.Currency != Currency)
+                throw new InvalidOperationException("Cannot add transaction with different currency to the wallet.");
+
             Transactions.Add(transaction);
+            Balance += transaction.Price.Amount;
+        }
+            
     }
 }

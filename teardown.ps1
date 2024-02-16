@@ -12,6 +12,7 @@ kubectl delete -f $DEPLOYMENT_DIR/event-generator-np.yaml
 # Delete the Deployments
 kubectl delete -f $DEPLOYMENT_DIR/mongodb-depl.yaml
 kubectl delete -f $DEPLOYMENT_DIR/postgres-depl.yaml
+kubectl delete -f $DEPLOYMENT_DIR/redis-depl.yaml
 kubectl delete -f $DEPLOYMENT_DIR/wallet-depl.yaml
 kubectl delete -f $DEPLOYMENT_DIR/event-generator-depl.yaml
 

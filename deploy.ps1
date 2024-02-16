@@ -10,6 +10,7 @@ kubectl apply -f $DEPLOYMENT_DIR/local-postgres-pvc.yaml
 # Apply the Deployments
 kubectl apply -f $DEPLOYMENT_DIR/mongodb-depl.yaml
 kubectl apply -f $DEPLOYMENT_DIR/postgres-depl.yaml
+kubectl apply -f $DEPLOYMENT_DIR/redis-depl.yaml
 kubectl apply -f $DEPLOYMENT_DIR/wallet-depl.yaml
 kubectl apply -f $DEPLOYMENT_DIR/event-generator-depl.yaml
 
