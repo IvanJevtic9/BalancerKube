@@ -18,6 +18,12 @@ spec:
       containers:
       - name: wallet-service
         image: webdeveloper95/wallet-service:latest
+        env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres
+              key: postgres-password
 
 ---
 apiVersion: v1

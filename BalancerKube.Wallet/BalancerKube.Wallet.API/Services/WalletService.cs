@@ -5,7 +5,6 @@ using BalancerKube.Wallet.Domain.Common;
 using BalancerKube.Wallets.API.Persistence;
 using BalancerKube.Wallet.API.Services.Base;
 using BalancerKube.Wallet.API.Models.Request;
-using LanguageExt;
 
 namespace BalancerKube.Wallet.API.Services
 {
@@ -14,7 +13,7 @@ namespace BalancerKube.Wallet.API.Services
         private readonly ApplicationDbContext _applicationDb;
 
         private readonly ConnectionMultiplexer _redis;
-        private readonly StackExchange.Redis.IDatabase _db;
+        private readonly IDatabase _db;
 
         public WalletService(ApplicationDbContext applicationDb, IConfiguration configuration)
         {

@@ -1,0 +1,13 @@
+# rabbit-nodeport.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbit-srv
+spec:
+  type: NodePort
+  selector:
+    app: rabbitmq
+  ports:
+    - port: 15672
+      targetPort: 15672
+      nodePort: 30008 

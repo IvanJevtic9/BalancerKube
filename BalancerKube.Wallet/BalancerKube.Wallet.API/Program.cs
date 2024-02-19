@@ -1,7 +1,9 @@
 using Polly;
-using LanguageExt;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using BalancerKube.Wallet.API.Settings;
 using BalancerKube.Wallet.API.Services;
+using BalancerKube.Wallet.API.Consumers;
 using BalancerKube.Wallets.API.Persistence;
 using BalancerKube.Wallet.API.Services.Base;
 using BalancerKube.Wallet.API.Models.Request;
@@ -16,7 +18,32 @@ builder.Services.AddScoped<IWalletService, WalletService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+var rabbitMqSettings = new RabbitMQSettings();
+builder.Configuration.GetSection("RabbitMQSettings").Bind(rabbitMqSettings);
+
+builder.Services.AddMassTransit(x =>
+{
+    x.AddConsumer<CreateTransactionConsumer>();
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(rabbitMqSettings?.Host, "/", h =>
+        {
+            h.Username(rabbitMqSettings?.Username);
+            h.Password(rabbitMqSettings?.Password);
+        });
+
+        cfg.ReceiveEndpoint($"{rabbitMqSettings?.EndpointName}-create-transaction", e =>
+        {
+            e.Consumer<CreateTransactionConsumer>(context);
+            e.Bind("BalanceKube.Contracts:CreateTransactionDto");
+        });
+    });
+});
+
 var app = builder.Build();
+
+Console.WriteLine($"Connection string: {builder.Configuration.GetConnectionString("WalletDb")}, Is production: {app.Environment.IsProduction()}");
 
 // Migrate pending migrations
 using (var scope = app.Services.CreateScope())
@@ -29,9 +56,7 @@ using (var scope = app.Services.CreateScope())
             {
                 TimeSpan.FromSeconds(1),
                 TimeSpan.FromSeconds(5),
-                TimeSpan.FromSeconds(10),
-                TimeSpan.FromSeconds(30),
-                TimeSpan.FromSeconds(60)
+                TimeSpan.FromSeconds(10)
             }
         )
         .Execute(() =>
@@ -47,11 +72,8 @@ using (var scope = app.Services.CreateScope())
         });
 }
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // Map minimal API endpoint for creating a transaction
 app.MapPost("/api/transaction", async (CreateTransactionRequest request, IWalletService walletService) =>

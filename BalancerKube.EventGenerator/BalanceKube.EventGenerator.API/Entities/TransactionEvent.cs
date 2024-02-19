@@ -9,6 +9,7 @@ namespace BalanceKube.EventGenerator.API.Entities
         public int UserId { get; init; }
         public TransactionType Type { get; init; }
         public decimal Amount { get; init; }
+        public string Currency { get; init; } = null!;
         public TransactionStatus Status { get; init; } = TransactionStatus.Pending;
         public DateTime CreatedAt { get; init; }
         public DateTime? ProcessedAt { get; init; }

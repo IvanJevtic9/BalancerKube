@@ -4,6 +4,8 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using BalanceKube.EventGenerator.API.Common;
 using BalanceKube.EventGenerator.API.Settings;
+using BalanceKube.EventGenerator.API.Entities.Base;
+using BalanceKube.EventGenerator.API.Persistence.Base;
 
 namespace BalanceKube.EventGenerator.API.Persistence
 {
@@ -23,6 +25,18 @@ namespace BalanceKube.EventGenerator.API.Persistence
 
                 return new MongoClient(mongoDbSettings?.ConnectionString)
                     .GetDatabase(mongoDbSettings?.Name);
+            });
+
+            return services;
+        }
+
+        public static IServiceCollection AddMongoRepository<T>(this IServiceCollection services, string collectionName)
+            where T : IEntity
+        {
+            services.AddSingleton<IRepository<T>>(serviceProvider =>
+            {
+                var database = serviceProvider.GetService<IMongoDatabase>();
+                return new Repository<T>(database, collectionName);
             });
 
             return services;
