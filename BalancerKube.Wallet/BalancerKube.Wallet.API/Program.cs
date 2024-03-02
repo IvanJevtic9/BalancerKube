@@ -7,6 +7,7 @@ using BalancerKube.Wallet.API.Consumers;
 using BalancerKube.Wallets.API.Persistence;
 using BalancerKube.Wallet.API.Services.Base;
 using BalancerKube.Wallet.API.Models.Request;
+using BalancerKube.Wallet.API.Models.Contracts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,14 +37,16 @@ builder.Services.AddMassTransit(x =>
         cfg.ReceiveEndpoint($"{rabbitMqSettings?.EndpointName}-create-transaction", e =>
         {
             e.Consumer<CreateTransactionConsumer>(context);
-            e.Bind("BalanceKube.Contracts:CreateTransactionDto");
+            e.Bind(ContractNames.CreateTransaction);
         });
     });
 });
 
-var app = builder.Build();
+// Logging
+builder.Logging.ClearProviders();
+builder.Logging.AddJsonConsole();
 
-Console.WriteLine($"Connection string: {builder.Configuration.GetConnectionString("WalletDb")}, Is production: {app.Environment.IsProduction()}");
+var app = builder.Build();
 
 // Migrate pending migrations
 using (var scope = app.Services.CreateScope())
@@ -82,18 +85,10 @@ app.MapPost("/api/transaction", async (CreateTransactionRequest request, IWallet
 
     if (result.IsFaulted)
     {
-        var exceptionMessage = result.Match(
-            Succ: res => string.Empty,
-            Fail: err => err.Message);
-
-        return Results.BadRequest(exceptionMessage);
+        return Results.BadRequest(result.Exception?.Message);
     }
 
-    var transactionId = result.Match(
-        Succ: res => res,
-        Fail: err => Guid.Empty);
-
-    return Results.Ok(transactionId);
+    return Results.Ok(result.Value);
 });
 
 app.MapPost("/api/user", async (CreateUserRequest request, ApplicationDbContext applicationDb) =>
@@ -103,7 +98,10 @@ app.MapPost("/api/user", async (CreateUserRequest request, ApplicationDbContext 
         return Results.BadRequest($"{nameof(request.Username)} is a required field.");
     }
 
-    var user = BalancerKube.Domain.Entities.User.Create(request.Username, request.City, request.Address);
+    var user = BalancerKube.Domain.Entities.User.Create(
+        request.Username,
+        request.City,
+        request.Address);
 
     applicationDb.Users.Add(user);
     await applicationDb.SaveChangesAsync();

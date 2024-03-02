@@ -1,18 +1,18 @@
-﻿using LanguageExt.Common;
-using StackExchange.Redis;
+﻿using StackExchange.Redis;
 using Microsoft.EntityFrameworkCore;
 using BalancerKube.Wallet.Domain.Common;
 using BalancerKube.Wallets.API.Persistence;
 using BalancerKube.Wallet.API.Services.Base;
 using BalancerKube.Wallet.API.Models.Request;
+using BalancerKube.Wallet.API.Models.Common;
 
 namespace BalancerKube.Wallet.API.Services
 {
     public class WalletService : IWalletService
     {
+        private readonly ConnectionMultiplexer _redis;
         private readonly ApplicationDbContext _applicationDb;
 
-        private readonly ConnectionMultiplexer _redis;
         private readonly IDatabase _db;
 
         public WalletService(ApplicationDbContext applicationDb, IConfiguration configuration)
@@ -30,6 +30,12 @@ namespace BalancerKube.Wallet.API.Services
             if (!string.IsNullOrEmpty(errorMessage))
             {
                 return new Result<Guid>(new Exception(errorMessage));
+            }
+
+            // Make Transaction processing idempotent
+            if (_applicationDb.Transactions.Any(x => x.CorrelationId == request.CorrelationId))
+            {
+                return new Result<Guid>(request.CorrelationId);
             }
 
             var lockKey = $"wallet:lock:{request.UserId}";
@@ -50,11 +56,9 @@ namespace BalancerKube.Wallet.API.Services
                         return new Result<Guid>(new Exception("User not found"));
                     }
 
-                    var amount = request.TransactionType == "deposit" ?
-                        request.Amount :
-                        -request.Amount;
-
+                    var amount = request.TransactionType == "deposit" ? request.Amount : -request.Amount;
                     var transaction = user.AddTransaction(request.CorrelationId, new Money(amount, new Currency(request.Currency)));
+
                     _applicationDb.Transactions.Add(transaction);
 
                     await _applicationDb.SaveChangesAsync();
@@ -76,7 +80,7 @@ namespace BalancerKube.Wallet.API.Services
 
         IEnumerable<string> ValidateRequest(CreateTransactionRequest request)
         {
-            if(request.Amount <= 0)
+            if (request.Amount <= 0)
             {
                 yield return $"{nameof(request.Amount)} must be greater then zero.";
             }
@@ -87,10 +91,14 @@ namespace BalancerKube.Wallet.API.Services
                 yield return $"{nameof(request.TransactionType)} is not valid.";
             }
 
-            // TODO Add a validation for currency
             if (string.IsNullOrWhiteSpace(request.Currency))
             {
                 yield return $"{nameof(request.Currency)} is a required field.";
+            }
+
+            if(!Currency.VerifyCurrency(request.Currency))
+            {
+                yield return $"{nameof(request.Currency)} is not supported currency.";
             }
 
             if (request.CorrelationId == Guid.Empty)

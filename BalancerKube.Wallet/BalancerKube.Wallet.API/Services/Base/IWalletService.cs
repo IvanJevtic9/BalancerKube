@@ -1,5 +1,5 @@
-﻿using BalancerKube.Wallet.API.Models.Request;
-using LanguageExt.Common;
+﻿using BalancerKube.Wallet.API.Models.Common;
+using BalancerKube.Wallet.API.Models.Request;
 
 namespace BalancerKube.Wallet.API.Services.Base
 {
