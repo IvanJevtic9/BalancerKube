@@ -19,13 +19,13 @@ kubectl delete -f $DEPLOYMENT_DIR/wallet-depl.yaml
 kubectl delete -f $DEPLOYMENT_DIR/event-generator-depl.yaml
 
 # Delete Log stack
-# kubectl delete -f $DEPLOYMENT_DIR/elasticsearch-sts.yaml
-# kubectl delete -f $DEPLOYMENT_DIR/kibana/kibana-depl.yaml
-# kubectl delete -f $DEPLOYMENT_DIR/kibana/kibana-service.yaml
-# kubectl delete -f $DEPLOYMENT_DIR/fluenttd/clusterrole.yaml
-# kubectl delete -f $DEPLOYMENT_DIR/fluenttd/service-account.yaml
-# kubectl delete -f $DEPLOYMENT_DIR/fluenttd/clusterrole-binding.yaml
-# kubectl delete -f $DEPLOYMENT_DIR/fluenttd/deamonset.yaml
+# kubectl delete -f $DEPLOYMENT_DIR/ELKStack/elasticsearch/elasticsearch-sts.yaml
+# kubectl delete -f $DEPLOYMENT_DIR/ELKStack/kibana/kibana-depl.yaml
+# kubectl delete -f $DEPLOYMENT_DIR/ELKStack/kibana/kibana-service.yaml
+# kubectl delete -f $DEPLOYMENT_DIR/ELKStack/fluenttd/clusterrole.yaml
+# kubectl delete -f $DEPLOYMENT_DIR/ELKStack/fluenttd/service-account.yaml
+# kubectl delete -f $DEPLOYMENT_DIR/ELKStack/fluenttd/clusterrole-binding.yaml
+# kubectl delete -f $DEPLOYMENT_DIR/ELKStack/fluenttd/deamonset.yaml
 
 # Delete the Persistent Volume Claims
 # kubectl delete -f $DEPLOYMENT_DIR/local-mongo-pvc.yaml

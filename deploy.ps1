@@ -24,12 +24,12 @@ kubectl apply -f $DEPLOYMENT_DIR/wallet-np.yaml
 kubectl apply -f $DEPLOYMENT_DIR/event-generator-np.yaml
 
 # Apply Elasticsearch Log stack
-# kubectl apply -f $DEPLOYMENT_DIR/elasticsearch-sts.yaml
-# kubectl apply -f $DEPLOYMENT_DIR/kibana/kibana-depl.yaml
-# kubectl apply -f $DEPLOYMENT_DIR/kibana/kibana-service.yaml
-# kubectl apply -f $DEPLOYMENT_DIR/fluenttd/clusterrole.yaml
-# kubectl apply -f $DEPLOYMENT_DIR/fluenttd/service-account.yaml
-# kubectl apply -f $DEPLOYMENT_DIR/fluenttd/clusterrole-binding.yaml
-# kubectl apply -f $DEPLOYMENT_DIR/fluenttd/deamonset.yaml
+# kubectl apply -f $DEPLOYMENT_DIR/ELKStack/elasticsearch/elasticsearch-sts.yaml
+# kubectl apply -f $DEPLOYMENT_DIR/ELKStack/kibana/kibana-depl.yaml
+# kubectl apply -f $DEPLOYMENT_DIR/ELKStack/kibana/kibana-service.yaml
+# kubectl apply -f $DEPLOYMENT_DIR/ELKStack/fluenttd/clusterrole.yaml
+# kubectl apply -f $DEPLOYMENT_DIR/ELKStack/fluenttd/service-account.yaml
+# kubectl apply -f $DEPLOYMENT_DIR/ELKStack/fluenttd/clusterrole-binding.yaml
+# kubectl apply -f $DEPLOYMENT_DIR/ELKStack/fluenttd/deamonset.yaml
 
 echo "All resources have been deployed."
