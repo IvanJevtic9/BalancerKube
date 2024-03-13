@@ -1,3 +1,4 @@
+using Serilog;
 using MassTransit;
 using System.Reflection;
 using BalanceKube.EventGenerator.API.Entities;
@@ -5,11 +6,13 @@ using BalanceKube.EventGenerator.API.Persistence;
 using BalanceKube.EventGenerator.API.Services;
 using BalanceKube.EventGenerator.API.Settings;
 using BalanceKube.EventGenerator.API.HostedService;
+using Serilog.Formatting.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Host.UseSerilog();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -47,9 +50,29 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 app.UseSwagger();
 app.UseSwaggerUI();
-
+app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 
 app.MapControllers();
 
-app.Run();
+try
+{
+    // Kubernetes sets the Pod name in the HOSTNAME environment variable
+    Log.Logger = new LoggerConfiguration()
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("ServiceName", "EventGeneratorService")
+        .Enrich.WithProperty("InstanceId", Environment.GetEnvironmentVariable("HOSTNAME"))
+        .WriteTo.Console(new JsonFormatter())
+        .CreateLogger();
+
+    Log.Information("Application starting up.");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "The application failed to start correctly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

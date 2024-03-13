@@ -1,5 +1,7 @@
 using Polly;
 using MassTransit;
+using Serilog;
+using Serilog.Formatting.Json;
 using Microsoft.EntityFrameworkCore;
 using BalancerKube.Wallet.API.Settings;
 using BalancerKube.Wallet.API.Services;
@@ -11,6 +13,7 @@ using BalancerKube.Wallet.API.Models.Contracts;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseSerilog();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("WalletDb")));
 
@@ -41,10 +44,6 @@ builder.Services.AddMassTransit(x =>
         });
     });
 });
-
-// Logging
-builder.Logging.ClearProviders();
-builder.Logging.AddJsonConsole();
 
 var app = builder.Build();
 
@@ -77,6 +76,7 @@ using (var scope = app.Services.CreateScope())
 
 app.UseSwagger();
 app.UseSwaggerUI();
+app.UseSerilogRequestLogging();
 
 // Map minimal API endpoint for creating a transaction
 app.MapPost("/api/transaction", async (CreateTransactionRequest request, IWalletService walletService) =>
@@ -109,4 +109,24 @@ app.MapPost("/api/user", async (CreateUserRequest request, ApplicationDbContext 
     return Results.Ok(user.Id);
 });
 
-app.Run();
+try
+{
+    // Kubernetes sets the Pod name in the HOSTNAME environment variable
+    Log.Logger = new LoggerConfiguration()
+        .Enrich.FromLogContext()
+        .Enrich.WithProperty("ServiceName", "WalletService")
+        .Enrich.WithProperty("InstanceId", Environment.GetEnvironmentVariable("HOSTNAME"))
+        .WriteTo.Console(new JsonFormatter())
+        .CreateLogger();
+
+    Log.Information("Application starting up.");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "The application failed to start correctly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
