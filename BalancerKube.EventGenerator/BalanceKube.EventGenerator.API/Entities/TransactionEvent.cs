@@ -3,15 +3,19 @@ using BalanceKube.EventGenerator.API.Entities.Base;
 
 namespace BalanceKube.EventGenerator.API.Entities
 {
-    public class TransactionEvent : IEntity
+    public sealed class TransactionEvent : IEntity
     {
-        public Guid Id { get; init; }
-        public int UserId { get; init; }
-        public TransactionType Type { get; init; }
-        public decimal Amount { get; init; }
-        public string Currency { get; init; } = null!;
-        public TransactionStatus Status { get; init; } = TransactionStatus.Pending;
-        public DateTime CreatedAt { get; init; }
-        public DateTime? ProcessedAt { get; init; }
+        public Guid Id { get; set; }
+        public int UserId { get; set; }
+        public TransactionType Type { get; set; }
+        public decimal Amount { get; set; }
+        public string Currency { get; set; } = null!;
+        public TransactionStatus Status { get; set; } = TransactionStatus.Pending;
+        public Guid TransactionId { get; set; }
+        public string ErrorMessage { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public DateTime? ProcessedAt { get; set; }
+
+
     }
 }

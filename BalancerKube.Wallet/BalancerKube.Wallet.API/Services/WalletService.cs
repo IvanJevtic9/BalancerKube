@@ -1,10 +1,11 @@
 ﻿using StackExchange.Redis;
 using Microsoft.EntityFrameworkCore;
 using BalancerKube.Wallet.Domain.Common;
+using BalancerKube.Wallet.API.Exceptions;
 using BalancerKube.Wallets.API.Persistence;
+using BalancerKube.Wallet.API.Models.Common;
 using BalancerKube.Wallet.API.Services.Base;
 using BalancerKube.Wallet.API.Models.Request;
-using BalancerKube.Wallet.API.Models.Common;
 
 namespace BalancerKube.Wallet.API.Services
 {
@@ -25,57 +26,70 @@ namespace BalancerKube.Wallet.API.Services
 
         public async Task<Result<Guid>> ProcessTransactionAsync(CreateTransactionRequest request)
         {
+            // Make Transaction processing idempotent
+            if (_applicationDb.Transactions.Any(x => x.CorrelationId == request.CorrelationId))
+            {
+                return new Result<Guid>(Guid.Empty);
+            }
+
             var errorMessage = ValidateRequest(request).FirstOrDefault();
 
             if (!string.IsNullOrEmpty(errorMessage))
             {
-                return new Result<Guid>(new Exception(errorMessage));
+                return new Result<Guid>(new ValidationException(errorMessage));
             }
 
-            // Make Transaction processing idempotent
-            if (_applicationDb.Transactions.Any(x => x.CorrelationId == request.CorrelationId))
-            {
-                return new Result<Guid>(request.CorrelationId);
-            }
-
-            var lockKey = $"wallet:lock:{request.UserId}";
             var lockToken = Guid.NewGuid().ToString();
+            var lockKey = $"wallet:lock:{request.UserId}:{request.Currency}";
 
-            // Try to acquire a distributed lock
-            if (await _db.LockTakeAsync(lockKey, lockToken, TimeSpan.FromSeconds(30)))
+            var timeout = TimeSpan.FromSeconds(30);
+            var retryDelay = TimeSpan.FromSeconds(1);
+            var deadline = DateTime.Now.Add(timeout);
+
+            while(DateTime.Now < deadline)
             {
-                try
+                // Try to acquire a distributed lock
+                if (await _db.LockTakeAsync(lockKey, lockToken, TimeSpan.FromSeconds(30)))
                 {
-                    var user = await _applicationDb.Users
-                        .Include(u => u.Wallets)
-                        .ThenInclude(u => u.Transactions)
-                        .FirstOrDefaultAsync(x => x.Id == request.UserId);
-
-                    if (user is null)
+                    try
                     {
-                        return new Result<Guid>(new Exception("User not found"));
+                        var user = await _applicationDb.Users
+                            .Include(u => u.Wallets)
+                            .ThenInclude(u => u.Transactions)
+                            .FirstOrDefaultAsync(x => x.Id == request.UserId);
+
+                        if (user is null)
+                        {
+                            return new Result<Guid>(new ValidationException("User not found"));
+                        }
+
+                        var amount = request.TransactionType == "deposit" ?
+                            request.Amount :
+                            -request.Amount;
+
+                        var transaction = user.AddTransaction(
+                            request.CorrelationId,
+                            new Money(amount, new Currency(request.Currency)));
+
+                        _applicationDb.Transactions.Add(transaction);
+                        await _applicationDb.SaveChangesAsync();
+
+                        return new Result<Guid>(transaction.CorrelationId);
                     }
-
-                    var amount = request.TransactionType == "deposit" ? request.Amount : -request.Amount;
-                    var transaction = user.AddTransaction(request.CorrelationId, new Money(amount, new Currency(request.Currency)));
-
-                    _applicationDb.Transactions.Add(transaction);
-
-                    await _applicationDb.SaveChangesAsync();
-
-                    return new Result<Guid>(transaction.Id);
+                    finally
+                    {
+                        // Always release the lock
+                        await _db.LockReleaseAsync(lockKey, lockToken);
+                    }
                 }
-                finally
+                else
                 {
-                    // Always release the lock
-                    await _db.LockReleaseAsync(lockKey, lockToken);
+                    // Wait before retrying
+                    await Task.Delay(retryDelay);
                 }
             }
-            else
-            {
-                // Could not acquire the lock
-                return new Result<Guid>(new Exception("Could not acquire lock"));
-            }
+
+            return new Result<Guid>(new ConcurrencyException("Could not acquire lock"));
         }
 
         IEnumerable<string> ValidateRequest(CreateTransactionRequest request)
@@ -96,7 +110,7 @@ namespace BalancerKube.Wallet.API.Services
                 yield return $"{nameof(request.Currency)} is a required field.";
             }
 
-            if(!Currency.VerifyCurrency(request.Currency))
+            if (!Currency.VerifyCurrency(request.Currency))
             {
                 yield return $"{nameof(request.Currency)} is not supported currency.";
             }

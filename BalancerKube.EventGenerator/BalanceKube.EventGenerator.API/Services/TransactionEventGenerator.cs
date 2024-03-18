@@ -8,11 +8,11 @@ namespace BalanceKube.EventGenerator.API.Services
     {
         private readonly Random _random = new Random();
 
-        private readonly string[] _currencies = new string[] {
+        private readonly string[] _currencies = [
             "EUR",
             "USD",
             "CHF"
-        };
+        ];
 
         public TransactionEvent GenerateRandomEvent(int userId)
         {
@@ -23,7 +23,7 @@ namespace BalanceKube.EventGenerator.API.Services
                 Type = GenerateRandomTransactionType(),
                 Amount = GenerateRandomAmount(),
                 Currency = GenerateRandomCurrency(),
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.Now,
                 Status = TransactionStatus.Pending
             };
 

@@ -1,7 +1,7 @@
 using Polly;
-using MassTransit;
 using Serilog;
-using Serilog.Formatting.Json;
+using MassTransit;
+using BalancerKube.Contracts;
 using Microsoft.EntityFrameworkCore;
 using BalancerKube.Wallet.API.Settings;
 using BalancerKube.Wallet.API.Services;
@@ -9,7 +9,6 @@ using BalancerKube.Wallet.API.Consumers;
 using BalancerKube.Wallets.API.Persistence;
 using BalancerKube.Wallet.API.Services.Base;
 using BalancerKube.Wallet.API.Models.Request;
-using BalancerKube.Wallet.API.Models.Contracts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,9 +38,14 @@ builder.Services.AddMassTransit(x =>
 
         cfg.ReceiveEndpoint($"{rabbitMqSettings?.EndpointName}-create-transaction", e =>
         {
+            e.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(10)));
             e.Consumer<CreateTransactionConsumer>(context);
             e.Bind(ContractNames.CreateTransaction);
         });
+
+        cfg.ConfigureEndpoints(
+            context,
+            new KebabCaseEndpointNameFormatter(rabbitMqSettings?.EndpointName, false));
     });
 });
 
@@ -116,7 +120,7 @@ try
         .Enrich.FromLogContext()
         .Enrich.WithProperty("ServiceName", "WalletService")
         .Enrich.WithProperty("InstanceId", Environment.GetEnvironmentVariable("HOSTNAME"))
-        .WriteTo.Console(new JsonFormatter())
+        //.WriteTo.Console(new JsonFormatter())
         .CreateLogger();
 
     Log.Information("Application starting up.");

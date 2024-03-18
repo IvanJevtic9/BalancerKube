@@ -1,12 +1,13 @@
 using Serilog;
 using MassTransit;
-using System.Reflection;
+using Serilog.Formatting.Json;
+using BalanceKube.Contracts;
 using BalanceKube.EventGenerator.API.Entities;
 using BalanceKube.EventGenerator.API.Persistence;
 using BalanceKube.EventGenerator.API.Services;
 using BalanceKube.EventGenerator.API.Settings;
 using BalanceKube.EventGenerator.API.HostedService;
-using Serilog.Formatting.Json;
+using BalanceKube.EventGenerator.API.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +28,7 @@ builder.Configuration.GetSection("RabbitMQSettings").Bind(rabbitMqSettings);
 
 builder.Services.AddMassTransit(x =>
 {
-    x.AddConsumers(Assembly.GetEntryAssembly());
+    x.AddConsumer<TransactionResultConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -35,6 +36,13 @@ builder.Services.AddMassTransit(x =>
         {
             h.Username(rabbitMqSettings?.Username);
             h.Password(rabbitMqSettings?.Password);
+        });
+
+        cfg.ReceiveEndpoint($"{rabbitMqSettings?.EndpointName}-transaction-result", e =>
+        {
+            e.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(10)));
+            e.Consumer<TransactionResultConsumer>(context);
+            e.Bind(ContractNames.TransactionResult);
         });
 
         cfg.ConfigureEndpoints(

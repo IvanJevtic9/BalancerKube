@@ -1,4 +1,4 @@
-﻿namespace BalancerKube.Wallet.API.Models.Contracts
+﻿namespace BalancerKube.Contracts
 {
     public static class ContractNames
     {
