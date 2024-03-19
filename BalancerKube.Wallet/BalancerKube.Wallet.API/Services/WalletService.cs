@@ -109,7 +109,7 @@ namespace BalancerKube.Wallet.API.Services
             _applicationDb.Transactions.Add(transaction);
             await _applicationDb.SaveChangesAsync();
 
-            return new Result<Guid>(transaction.CorrelationId);
+            return new Result<Guid>(transaction.Id);
         }
 
         private IEnumerable<string> ValidateRequest(CreateTransactionRequest request)
