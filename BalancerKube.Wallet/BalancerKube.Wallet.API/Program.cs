@@ -127,6 +127,7 @@ try
         .Enrich.FromLogContext()
         .Enrich.WithProperty("ServiceName", "WalletService")
         .Enrich.WithProperty("InstanceId", Environment.GetEnvironmentVariable("HOSTNAME"))
+        .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Warning)
         .WriteTo.Console()
         .CreateLogger();
 

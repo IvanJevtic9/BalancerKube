@@ -74,6 +74,7 @@ namespace BalancerKube.Wallet.API.Consumers
                     throw ce; // Rethrowing maintains the original stack trace.
 
                 case ValidationException ve:
+                    LogWarning($"Validation exception for message {message.CorrelationId}: {ve.Message}. Return error response");
                     await _publishEndpoint.Publish(new TransactionResultDto(
                         false,
                         message.CorrelationId,

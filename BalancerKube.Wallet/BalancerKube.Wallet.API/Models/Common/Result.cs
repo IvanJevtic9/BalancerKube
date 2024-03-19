@@ -5,12 +5,20 @@
         private readonly T? _value;
         private readonly Exception? _exception;
 
-        public Result(T value) => _value = value;
-        public Result(Exception exception) => _exception = exception;
+        public Result(T value)
+        {
+            _value = value;
+            IsSuccess = true;
+        }
+        public Result(Exception exception)
+        {
+            _exception = exception;
+            IsFaulted = true;
+        }
 
-        public bool IsFaulted => _exception is not null;
+        public bool IsFaulted { get; private set; } = false;
 
-        public bool IsSuccess => _value is not null;
+        public bool IsSuccess { get; private set; } = false;
 
         public T? Value
         {
