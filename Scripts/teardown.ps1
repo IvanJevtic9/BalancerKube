@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Path to the directory containing all your yaml files
-$DEPLOYMENT_DIR="./Deployments"
+$DEPLOYMENT_DIR="./../Deployments"
 
 # Delete the Services (NodePort, ClusterIP)
 kubectl delete -f $DEPLOYMENT_DIR/mongodb-np.yaml

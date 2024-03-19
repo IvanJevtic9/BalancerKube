@@ -9,6 +9,7 @@ using BalancerKube.Wallet.API.Consumers;
 using BalancerKube.Wallets.API.Persistence;
 using BalancerKube.Wallet.API.Services.Base;
 using BalancerKube.Wallet.API.Models.Request;
+using BalanceKube.Contracts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,12 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((context, cfg) =>
     {
+        cfg.UseScheduledRedelivery(r =>
+            r.Intervals(
+                TimeSpan.FromMinutes(1),
+                TimeSpan.FromMinutes(5),
+                TimeSpan.FromMinutes(10)));
+
         cfg.Host(rabbitMqSettings?.Host, "/", h =>
         {
             h.Username(rabbitMqSettings?.Username);
@@ -42,10 +49,6 @@ builder.Services.AddMassTransit(x =>
             e.Consumer<CreateTransactionConsumer>(context);
             e.Bind(ContractNames.CreateTransaction);
         });
-
-        cfg.ConfigureEndpoints(
-            context,
-            new KebabCaseEndpointNameFormatter(rabbitMqSettings?.EndpointName, false));
     });
 });
 
@@ -95,7 +98,7 @@ app.MapPost("/api/transaction", async (CreateTransactionRequest request, IWallet
     return Results.Ok(result.Value);
 });
 
-app.MapPost("/api/user", async (CreateUserRequest request, ApplicationDbContext applicationDb) =>
+app.MapPost("/api/user", async (CreateUserRequest request, ApplicationDbContext applicationDb, IPublishEndpoint publishEndpoint) =>
 {
     if (string.IsNullOrWhiteSpace(request.Username))
     {
@@ -110,6 +113,10 @@ app.MapPost("/api/user", async (CreateUserRequest request, ApplicationDbContext 
     applicationDb.Users.Add(user);
     await applicationDb.SaveChangesAsync();
 
+    await publishEndpoint.Publish(new RegisteredNewUserDto(
+        user.Id,
+        user.Username));
+
     return Results.Ok(user.Id);
 });
 
@@ -120,7 +127,7 @@ try
         .Enrich.FromLogContext()
         .Enrich.WithProperty("ServiceName", "WalletService")
         .Enrich.WithProperty("InstanceId", Environment.GetEnvironmentVariable("HOSTNAME"))
-        //.WriteTo.Console(new JsonFormatter())
+        .WriteTo.Console()
         .CreateLogger();
 
     Log.Information("Application starting up.");

@@ -1,12 +1,14 @@
 using BalanceKube.Contracts;
 using BalanceKube.EventGenerator.API.Common;
 using BalanceKube.EventGenerator.API.Entities;
+using BalanceKube.EventGenerator.API.Persistence.Base;
 
 namespace BalanceKube.EventGenerator.API.Services
 {
     public class TransactionEventGenerator
     {
         private readonly Random _random = new Random();
+        private readonly IRepository<User> _userRepository;
 
         private readonly string[] _currencies = [
             "EUR",
@@ -14,20 +16,38 @@ namespace BalanceKube.EventGenerator.API.Services
             "CHF"
         ];
 
-        public TransactionEvent GenerateRandomEvent(int userId)
+        public TransactionEventGenerator(IRepository<User> userRepository)
+        {
+            _userRepository = userRepository;
+        }
+
+        public async Task<TransactionEvent> GenerateRandomEvent()
         {
             var transactionEvent = new TransactionEvent
             {
                 Id = Guid.NewGuid(),
-                UserId = userId,
+                UserId = await GetRandomUserIdAsync(),
                 Type = GenerateRandomTransactionType(),
                 Amount = GenerateRandomAmount(),
                 Currency = GenerateRandomCurrency(),
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
                 Status = TransactionStatus.Pending
             };
 
             return transactionEvent;
+        }
+
+        public async Task<int> GetRandomUserIdAsync()
+        {
+            var users = await _userRepository.GetAllAsync();
+            
+            if (users == null || !users.Any())
+            {
+                throw new InvalidOperationException("No users available");
+            }
+
+            int index = _random.Next(users.Count);
+            return users.ElementAt(index).UserId;
         }
 
         public CreateTransactionDto MapPublishModel(TransactionEvent tr) =>
@@ -50,5 +70,4 @@ namespace BalanceKube.EventGenerator.API.Services
         private decimal GenerateRandomAmount() =>
             (decimal)(Math.Pow(_random.NextDouble(), 3) * 10000);
     }
-
 }

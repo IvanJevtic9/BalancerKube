@@ -76,6 +76,10 @@ namespace BalancerKube.Wallet.API.Services
 
                         return new Result<Guid>(transaction.CorrelationId);
                     }
+                    catch(Exception ex)
+                    {
+                        return new Result<Guid>(ex);
+                    }
                     finally
                     {
                         // Always release the lock

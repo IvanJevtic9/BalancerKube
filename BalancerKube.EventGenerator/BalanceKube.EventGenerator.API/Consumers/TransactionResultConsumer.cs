@@ -1,8 +1,8 @@
-﻿using BalanceKube.Contracts;
+﻿using MassTransit;
+using BalanceKube.Contracts;
 using BalanceKube.EventGenerator.API.Common;
 using BalanceKube.EventGenerator.API.Entities;
 using BalanceKube.EventGenerator.API.Persistence.Base;
-using MassTransit;
 
 namespace BalanceKube.EventGenerator.API.Consumers
 {
@@ -37,8 +37,11 @@ namespace BalanceKube.EventGenerator.API.Consumers
 
             transactionEvent.TransactionId = message.TransactionId ?? Guid.Empty;
             transactionEvent.ErrorMessage = message.ErrorMessage ?? string.Empty;
+            transactionEvent.ProcessedAt = DateTime.UtcNow;
 
             await _transactionRepository.UpdateAsync(transactionEvent);
+
+            _logger.LogInformation($"Transaction with id: {transactionEvent.Id} has been processed.");
         }
     }
 }

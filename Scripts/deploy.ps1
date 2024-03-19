@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Path to the directory containing all your yaml files
-$DEPLOYMENT_DIR="./Deployments"
+$DEPLOYMENT_DIR="./../Deployments"
 
 # Apply the Persistent Volume Claims
 kubectl apply -f $DEPLOYMENT_DIR/local-mongo-pvc.yaml

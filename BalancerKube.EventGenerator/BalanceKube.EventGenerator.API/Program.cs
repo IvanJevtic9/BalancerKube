@@ -1,6 +1,5 @@
 using Serilog;
 using MassTransit;
-using Serilog.Formatting.Json;
 using BalanceKube.Contracts;
 using BalanceKube.EventGenerator.API.Entities;
 using BalanceKube.EventGenerator.API.Persistence;
@@ -29,9 +28,16 @@ builder.Configuration.GetSection("RabbitMQSettings").Bind(rabbitMqSettings);
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<TransactionResultConsumer>();
+    x.AddConsumer<RegisterNewUserConusmer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
+        cfg.UseScheduledRedelivery(r => 
+            r.Intervals(
+                TimeSpan.FromMinutes(1),
+                TimeSpan.FromMinutes(5),
+                TimeSpan.FromMinutes(10)));
+
         cfg.Host(rabbitMqSettings?.Host, "/", h =>
         {
             h.Username(rabbitMqSettings?.Username);
@@ -45,9 +51,16 @@ builder.Services.AddMassTransit(x =>
             e.Bind(ContractNames.TransactionResult);
         });
 
-        cfg.ConfigureEndpoints(
-            context,
-            new KebabCaseEndpointNameFormatter(rabbitMqSettings?.EndpointName, false));
+        cfg.ReceiveEndpoint($"{rabbitMqSettings?.EndpointName}-register-user", e =>
+        {
+            e.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(10)));
+            e.Consumer<RegisterNewUserConusmer>(context);
+            e.Bind(ContractNames.RegisterNewUser);
+        });
+
+        //cfg.ConfigureEndpoints(
+        //    context,
+        //    new KebabCaseEndpointNameFormatter(rabbitMqSettings?.EndpointName, false));
     });
 });
 
@@ -70,7 +83,7 @@ try
         .Enrich.FromLogContext()
         .Enrich.WithProperty("ServiceName", "EventGeneratorService")
         .Enrich.WithProperty("InstanceId", Environment.GetEnvironmentVariable("HOSTNAME"))
-        .WriteTo.Console(new JsonFormatter())
+        .WriteTo.Console()
         .CreateLogger();
 
     Log.Information("Application starting up.");
