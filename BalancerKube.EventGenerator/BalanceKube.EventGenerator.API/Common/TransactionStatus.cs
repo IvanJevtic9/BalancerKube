@@ -1,9 +1,8 @@
-﻿namespace BalanceKube.EventGenerator.API.Common
+﻿namespace BalanceKube.EventGenerator.API.Common;
+
+public enum TransactionStatus
 {
-    public enum TransactionStatus
-    {
-        Pending,
-        Processed,
-        Failed
-    }
+    Pending,
+    Processed,
+    Failed
 }

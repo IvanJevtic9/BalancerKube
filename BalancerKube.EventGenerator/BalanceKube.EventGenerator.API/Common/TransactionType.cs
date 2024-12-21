@@ -1,8 +1,7 @@
-﻿namespace BalanceKube.EventGenerator.API.Common
+﻿namespace BalanceKube.EventGenerator.API.Common;
+
+public enum TransactionType
 {
-    public enum TransactionType
-    {
-        Deposit,
-        Withdrawal
-    }
+    Deposit,
+    Withdrawal
 }

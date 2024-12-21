@@ -28,7 +28,7 @@ builder.Configuration.GetSection("RabbitMQSettings").Bind(rabbitMqSettings);
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<TransactionResultConsumer>();
-    x.AddConsumer<RegisterNewUserConusmer>();
+    x.AddConsumer<RegisterNewUserConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -54,13 +54,9 @@ builder.Services.AddMassTransit(x =>
         cfg.ReceiveEndpoint($"{rabbitMqSettings?.EndpointName}-register-user", e =>
         {
             e.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(10)));
-            e.Consumer<RegisterNewUserConusmer>(context);
+            e.Consumer<RegisterNewUserConsumer>(context);
             e.Bind(ContractNames.RegisterNewUser);
         });
-
-        //cfg.ConfigureEndpoints(
-        //    context,
-        //    new KebabCaseEndpointNameFormatter(rabbitMqSettings?.EndpointName, false));
     });
 });
 

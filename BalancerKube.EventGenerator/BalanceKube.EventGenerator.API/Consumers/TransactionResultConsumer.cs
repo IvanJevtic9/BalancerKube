@@ -4,44 +4,41 @@ using BalanceKube.EventGenerator.API.Common;
 using BalanceKube.EventGenerator.API.Entities;
 using BalanceKube.EventGenerator.API.Persistence.Base;
 
-namespace BalanceKube.EventGenerator.API.Consumers
+namespace BalanceKube.EventGenerator.API.Consumers;
+
+public class TransactionResultConsumer : IConsumer<TransactionResultDto>
 {
-    public class TransactionResultConsumer : IConsumer<TransactionResultDto>
+    private readonly ILogger<TransactionResultConsumer> _logger;
+    private readonly IRepository<TransactionEvent> _transactionRepository;
+
+    public TransactionResultConsumer(ILogger<TransactionResultConsumer> logger, IRepository<TransactionEvent> transactionRepository)
     {
-        private readonly ILogger<TransactionResultConsumer> _logger;
-        private readonly IRepository<TransactionEvent> _transactionRepository;
+        _logger = logger;
+        _transactionRepository = transactionRepository;
+    }
 
-        public TransactionResultConsumer(
-            ILogger<TransactionResultConsumer> logger,
-            IRepository<TransactionEvent> transactionRepository)
+    public async Task Consume(ConsumeContext<TransactionResultDto> context)
+    {
+        var message = context.Message;
+
+        if (message is null)
         {
-            _logger = logger;
-            _transactionRepository = transactionRepository;
+            _logger.LogWarning("Consumed message is null.");
+            return;
         }
 
-        public async Task Consume(ConsumeContext<TransactionResultDto> context)
-        {
-            var message = context.Message;
+        var transactionEvent = await _transactionRepository.GetAsync(message.CorrelationId);
 
-            if (message is null)
-            {
-                _logger.LogWarning("Consumed message is null.");
-                return;
-            }
+        transactionEvent.Status = message.isSuccess ?
+            TransactionStatus.Processed :
+            TransactionStatus.Failed;
 
-            var transactionEvent = await _transactionRepository.GetAsync(message.CorrelationId);
+        transactionEvent.TransactionId = message.TransactionId ?? Guid.Empty;
+        transactionEvent.ErrorMessage = message.ErrorMessage ?? string.Empty;
+        transactionEvent.ProcessedAt = DateTime.UtcNow;
 
-            transactionEvent.Status = message.isSuccess ?
-                TransactionStatus.Processed :
-                TransactionStatus.Failed;
+        await _transactionRepository.UpdateAsync(transactionEvent);
 
-            transactionEvent.TransactionId = message.TransactionId ?? Guid.Empty;
-            transactionEvent.ErrorMessage = message.ErrorMessage ?? string.Empty;
-            transactionEvent.ProcessedAt = DateTime.UtcNow;
-
-            await _transactionRepository.UpdateAsync(transactionEvent);
-
-            _logger.LogInformation($"Transaction with id: {transactionEvent.Id} has been processed.");
-        }
+        _logger.LogInformation($"Transaction with id: {transactionEvent.Id} has been processed.");
     }
 }

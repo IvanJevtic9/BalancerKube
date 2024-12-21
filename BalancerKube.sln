@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34525.116
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BalanceKube.EventGenerator.API", "BalancerKube.EventGenerator\BalanceKube.EventGenerator.API\BalanceKube.EventGenerator.API.csproj", "{FC126119-F39C-4D17-9726-9931B150FF5D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BalancerKube.Wallet.API", "BalancerKube.Wallet\BalancerKube.Wallet.API\BalancerKube.Wallet.API.csproj", "{A0F96E2A-6704-4B37-A513-49467AD22A6E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BalancerKube.Wallet.Domain", "BalancerKube.Wallet\BalancerKube.Wallet.Domain\BalancerKube.Wallet.Domain.csproj", "{7C05F86B-B6A5-4AD8-B6B4-A52DD46EC54F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FC126119-F39C-4D17-9726-9931B150FF5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC126119-F39C-4D17-9726-9931B150FF5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC126119-F39C-4D17-9726-9931B150FF5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC126119-F39C-4D17-9726-9931B150FF5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0F96E2A-6704-4B37-A513-49467AD22A6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0F96E2A-6704-4B37-A513-49467AD22A6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0F96E2A-6704-4B37-A513-49467AD22A6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0F96E2A-6704-4B37-A513-49467AD22A6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C05F86B-B6A5-4AD8-B6B4-A52DD46EC54F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C05F86B-B6A5-4AD8-B6B4-A52DD46EC54F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C05F86B-B6A5-4AD8-B6B4-A52DD46EC54F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C05F86B-B6A5-4AD8-B6B4-A52DD46EC54F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C26AC2C9-D30B-4CF4-A516-675A17A2AE1D}
+	EndGlobalSection
+EndGlobal
