@@ -3,11 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BalanceKube.EventGenerator.API", "BalancerKube.EventGenerator\BalanceKube.EventGenerator.API\BalanceKube.EventGenerator.API.csproj", "{FC126119-F39C-4D17-9726-9931B150FF5D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BalancerKube.Common", "BalancerKube.Common\BalancerKube.Common.csproj", "{3C61020A-C090-434C-8FDB-52F73BE8601F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BalancerKube.Wallet.API", "BalancerKube.Wallet\BalancerKube.Wallet.API\BalancerKube.Wallet.API.csproj", "{A0F96E2A-6704-4B37-A513-49467AD22A6E}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "api", "api", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BalancerKube.Wallet.Domain", "BalancerKube.Wallet\BalancerKube.Wallet.Domain\BalancerKube.Wallet.Domain.csproj", "{7C05F86B-B6A5-4AD8-B6B4-A52DD46EC54F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BalanceKube.EventGenerator.API", "BalanceKube.EventGenerator.API\BalanceKube.EventGenerator.API.csproj", "{1228BD92-9E89-CF48-FDFB-A46EC41DBB6A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BalancerKube.Wallet.API", "BalancerKube.Wallet.API\BalancerKube.Wallet.API.csproj", "{834BD61A-7C86-6306-2243-9E12BCF7D48D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "infrastructure", "infrastructure", "{92A625A3-4320-46E3-AA79-35A5B2979B16}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{81DDED9D-158B-E303-5F62-77A2896D2A5A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,21 +21,30 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{FC126119-F39C-4D17-9726-9931B150FF5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FC126119-F39C-4D17-9726-9931B150FF5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FC126119-F39C-4D17-9726-9931B150FF5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FC126119-F39C-4D17-9726-9931B150FF5D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A0F96E2A-6704-4B37-A513-49467AD22A6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A0F96E2A-6704-4B37-A513-49467AD22A6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A0F96E2A-6704-4B37-A513-49467AD22A6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A0F96E2A-6704-4B37-A513-49467AD22A6E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7C05F86B-B6A5-4AD8-B6B4-A52DD46EC54F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7C05F86B-B6A5-4AD8-B6B4-A52DD46EC54F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7C05F86B-B6A5-4AD8-B6B4-A52DD46EC54F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7C05F86B-B6A5-4AD8-B6B4-A52DD46EC54F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C61020A-C090-434C-8FDB-52F73BE8601F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C61020A-C090-434C-8FDB-52F73BE8601F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C61020A-C090-434C-8FDB-52F73BE8601F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C61020A-C090-434C-8FDB-52F73BE8601F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1228BD92-9E89-CF48-FDFB-A46EC41DBB6A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1228BD92-9E89-CF48-FDFB-A46EC41DBB6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1228BD92-9E89-CF48-FDFB-A46EC41DBB6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1228BD92-9E89-CF48-FDFB-A46EC41DBB6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{834BD61A-7C86-6306-2243-9E12BCF7D48D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{834BD61A-7C86-6306-2243-9E12BCF7D48D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{834BD61A-7C86-6306-2243-9E12BCF7D48D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{834BD61A-7C86-6306-2243-9E12BCF7D48D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1228BD92-9E89-CF48-FDFB-A46EC41DBB6A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{834BD61A-7C86-6306-2243-9E12BCF7D48D} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{81DDED9D-158B-E303-5F62-77A2896D2A5A} = {92A625A3-4320-46E3-AA79-35A5B2979B16}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C26AC2C9-D30B-4CF4-A516-675A17A2AE1D}
