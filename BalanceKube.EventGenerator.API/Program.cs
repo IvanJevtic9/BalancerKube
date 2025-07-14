@@ -1,12 +1,21 @@
 using Serilog;
 using MassTransit;
 using BalanceKube.EventGenerator.API.Entities;
-using BalanceKube.EventGenerator.API.Persistence;
 using BalanceKube.EventGenerator.API.Services;
 using BalanceKube.EventGenerator.API.Settings;
 using BalanceKube.EventGenerator.API.HostedService;
 using BalanceKube.EventGenerator.API.Consumers;
 using BalancerKube.Common.Contracts;
+using BalanceKube.EventGenerator.API.Utilities;
+using BalanceKube.EventGenerator.API.Persistence;
+using BalancerKube.Common.Monitoring;
+using MassTransit.Logging;
+using MassTransit.Monitoring;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
+using Serilog.Enrichers.Span;
+using BalancerKube.Common.Telemetry;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,8 +32,41 @@ builder.Services.AddMongo();
 builder.Services.AddMongoRepository<ThirdPartyTransaction>("transactions");
 builder.Services.AddMongoRepository<User>("users");
 
-var rabbitMqSettings = new RabbitMQSettings();
-builder.Configuration.GetSection("RabbitMQSettings").Bind(rabbitMqSettings);
+var telemetrySettings = builder.Configuration
+    .GetSection(nameof(TelemetrySettings))
+    .Get<TelemetrySettings>() ?? new();
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracingBuilder =>
+    {
+        tracingBuilder
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+                serviceName: RunTimeDiagnosticConfig.ServiceName,
+                serviceVersion: RunTimeDiagnosticConfig.ServiceVersion,
+                serviceInstanceId: RunTimeDiagnosticConfig.ServiceInstanceId))
+            .AddSource(RunTimeDiagnosticConfig.Source.Name)
+            .AddSource(DiagnosticHeaders.DefaultListenerName)
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter(o => o.Endpoint = new Uri(telemetrySettings.TracesEndpoint));
+    })
+    .WithMetrics(metricProviderBuilder =>
+    {
+        metricProviderBuilder
+            .AddMeter(RunTimeDiagnosticConfig.Meter.Name, InstrumentationOptions.MeterName)
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+                serviceName: RunTimeDiagnosticConfig.ServiceName,
+                serviceVersion: RunTimeDiagnosticConfig.ServiceVersion,
+                serviceInstanceId: RunTimeDiagnosticConfig.ServiceInstanceId))
+            .AddRuntimeInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddAspNetCoreInstrumentation()
+            .AddOtlpExporter(o => o.Endpoint = new Uri(telemetrySettings.TracesEndpoint));
+    });
+
+var rabbitMqSettings = builder.Configuration
+    .GetSection(nameof(RabbitMQSettings))
+    .Get<RabbitMQSettings>() ?? throw new ArgumentNullException(nameof(RabbitMQSettings));
 
 builder.Services.AddMassTransit(x =>
 {
@@ -68,6 +110,8 @@ builder.Services.AddMassTransit(x =>
             e.Consumer<UserRegisteredConsumer>(context);
         });
     });
+
+    x.AddOpenTelemetry();
 });
 
 builder.Services.AddHostedService<EventBackgroundService>();
@@ -84,12 +128,16 @@ app.MapControllers();
 
 try
 {
-    // Kubernetes sets the Pod name in the HOSTNAME environment variable
     Log.Logger = new LoggerConfiguration()
-        .Enrich.FromLogContext()
-        .Enrich.WithProperty("ServiceName", "EventGeneratorService")
-        .Enrich.WithProperty("InstanceId", Environment.GetEnvironmentVariable("HOSTNAME"))
-        .WriteTo.Console()
+        .ReadFrom.Configuration(builder.Configuration)
+        .Enrich.WithProperty(nameof(RunTimeDiagnosticConfig.ServiceName), RunTimeDiagnosticConfig.ServiceName)
+        .Enrich.WithProperty(nameof(RunTimeDiagnosticConfig.ServiceInstanceId), RunTimeDiagnosticConfig.ServiceInstanceId)
+        .WriteTo.Sink(new SerilogOpenTelemetrySpanSink())
+        .WriteTo.OpenTelemetry(options =>
+        {
+            options.Endpoint = telemetrySettings.TracesEndpoint;
+            options.Protocol = Serilog.Sinks.OpenTelemetry.OtlpProtocol.HttpProtobuf;
+        })
         .CreateLogger();
 
     Log.Information("Application starting up.");

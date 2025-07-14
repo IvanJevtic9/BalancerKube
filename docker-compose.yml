@@ -65,12 +65,29 @@ services:
       dockerfile: Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - HOSTNAME=wallet-api-1 
     ports:
       - "5000:8080"
     depends_on:
       - redis
       - rabbitmq
       - postgres
+      - jaeger
+  
+  wallet-api-2:
+    build:
+      context: ./BalancerKube.Wallet.API
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - HOSTNAME=wallet-api-2 
+    ports:
+      - "5002:8080"
+    depends_on:
+      - redis
+      - rabbitmq
+      - postgres
+      - jaeger
 
   event-generator-api:
     build:
@@ -78,12 +95,33 @@ services:
       dockerfile: Dockerfile
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - HOSTNAME=event-generator-api-1
     ports:
       - "5001:8080"
     depends_on:
       - mongo
       - rabbitmq
+      - jaeger
 
+  event-generator-api-2:
+    build:
+      context: ./BalanceKube.EventGenerator.API
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - HOSTNAME=event-generator-api-2
+    ports:
+      - "5003:8080"
+    depends_on:
+      - mongo
+      - rabbitmq
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.54
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "4317:4317"   # OTLP gRPC endpoint for direct OpenTelemetry export
 
 volumes: 
   rabbitmqdata:

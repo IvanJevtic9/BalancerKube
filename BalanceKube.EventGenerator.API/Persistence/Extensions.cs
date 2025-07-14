@@ -4,8 +4,6 @@ using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 using BalanceKube.EventGenerator.API.Common;
 using BalanceKube.EventGenerator.API.Settings;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Resources;
 using BalancerKube.Common.Domain;
 using BalanceKube.EventGenerator.API.Abstraction;
 
@@ -41,25 +39,6 @@ public static class Extensions
 
             return new Repository<T>(database, collectionName);
         });
-
-        return services;
-    }
-
-    public static IServiceCollection AddOpenTelemetry(this IServiceCollection services)
-    {
-        //services.AddOpenTelemetry().ConfigureOpenTelemetryTracerProvider(tracerProviderBuilder =>
-        //{
-        //    tracerProviderBuilder
-        //        .AddAspNetCoreInstrumentation()
-        //        .AddHttpClientInstrumentation()
-        //        .AddSqlClientInstrumentation()
-        //        .AddSource("event-generator-service")
-        //        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("event-generator-service"))
-        //        .AddOtlpExporter(o =>
-        //        {
-        //            o.Endpoint = new Uri("http://localhost:4317");
-        //        });
-        //});
 
         return services;
     }

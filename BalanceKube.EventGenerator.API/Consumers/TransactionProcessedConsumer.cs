@@ -2,6 +2,8 @@
 using BalanceKube.EventGenerator.API.Entities;
 using BalancerKube.Common.Contracts;
 using BalanceKube.EventGenerator.API.Abstraction;
+using BalanceKube.EventGenerator.API.Utilities;
+using System.Diagnostics;
 
 namespace BalanceKube.EventGenerator.API.Consumers;
 
@@ -27,6 +29,10 @@ public sealed class TransactionProcessedConsumer : IConsumer<TransactionProcesse
             _logger.LogWarning("Consumed message is null.");
             return;
         }
+
+        using var activity = RunTimeDiagnosticConfig.Source.StartActivity("TransactionProcessed");
+        activity?.SetTag("correlationId", context.CorrelationId);
+        activity?.AddEvent(new ActivityEvent($"Transaction with id: {context.CorrelationId} has been processed."));
 
         var transaction = await _thirdPartyTransactionRepository.GetAsync(context.CorrelationId!.Value);
 

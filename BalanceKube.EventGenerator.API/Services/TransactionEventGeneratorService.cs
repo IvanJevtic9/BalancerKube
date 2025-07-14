@@ -1,7 +1,6 @@
 using BalanceKube.EventGenerator.API.Abstraction;
 using BalanceKube.EventGenerator.API.Common;
 using BalanceKube.EventGenerator.API.Entities;
-using Bogus;
 
 namespace BalanceKube.EventGenerator.API.Services;
 

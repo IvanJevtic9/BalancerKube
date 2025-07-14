@@ -1,6 +1,0 @@
-@BalanceKube.EventGenerator.API_HostAddress = http://localhost:5263
-
-GET {{BalanceKube.EventGenerator.API_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

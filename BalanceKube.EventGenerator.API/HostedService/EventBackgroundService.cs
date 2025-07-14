@@ -1,8 +1,9 @@
 ﻿using MassTransit;
-using System.Diagnostics;
 using BalanceKube.EventGenerator.API.Services;
 using BalanceKube.EventGenerator.API.Entities;
 using BalanceKube.EventGenerator.API.Abstraction;
+using BalanceKube.EventGenerator.API.Utilities;
+using System.Diagnostics;
 
 namespace BalanceKube.EventGenerator.API.HostedService;
 
@@ -12,8 +13,6 @@ public class EventBackgroundService : BackgroundService
     private readonly ILogger<EventBackgroundService> _logger;
     private readonly IRepository<ThirdPartyTransaction> _transactionRepository;
     private readonly TransactionEventGeneratorService _eventGenerator;
-
-    private static readonly ActivitySource _activitySource = new("EventGenerator");
 
     public EventBackgroundService(
         IServiceProvider serviceProvider,
@@ -31,35 +30,49 @@ public class EventBackgroundService : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            //using var activity = _activitySource.StartActivity("GenerateAndPublishEvent");
-
-            using var scope = _serviceProvider.CreateScope();
-            var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
-
-            try
+            using var activity = RunTimeDiagnosticConfig.Source.StartActivity("GenerateAndPublishTransaction");
             {
-                var thirdPartyTransaction = await _eventGenerator.GenerateTransactionAsync();
+                using var scope = _serviceProvider.CreateScope();
+                var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
 
-                //activity?.SetTag("transaction.id", thirdPartyTransaction.Id);
-                //activity?.AddEvent(new ActivityEvent("Event generated"));
+                try
+                {
+                    var thirdPartyTransaction = await _eventGenerator.GenerateTransactionAsync();
 
-                await _transactionRepository.CreateAsync(thirdPartyTransaction);
+                    activity?.SetTag("correlationId", thirdPartyTransaction.Id);
+                    activity?.SetTag("userId", thirdPartyTransaction.UserId);
+                    activity?.AddEvent(new ActivityEvent("Event generated"));
 
-                await publishEndpoint.Publish(
-                    thirdPartyTransaction.MapToContract(),
-                    context =>
-                    {
-                        context.CorrelationId = thirdPartyTransaction.Id;
-                        context.SetRoutingKey(thirdPartyTransaction.Type.ToString());
-                    },
-                    stoppingToken);
+                    await _transactionRepository.CreateAsync(thirdPartyTransaction);
 
-                //activity?.AddEvent(new ActivityEvent("Event published"));
-            }
-            catch (Exception ex)
-            {
-                //activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-                //activity?.AddException(ex);
+                    activity?.AddEvent(new ActivityEvent("Transaction persisted"));
+
+                    await publishEndpoint.Publish(
+                        thirdPartyTransaction.MapToContract(),
+                        context =>
+                        {
+                            context.CorrelationId = thirdPartyTransaction.Id;
+                            context.SetRoutingKey(thirdPartyTransaction.Type.ToString());
+                        },
+                        stoppingToken);
+
+                    activity?.AddEvent(new ActivityEvent("Event published"));
+
+                    _logger.LogInformation(
+                        "Transaction event generated and published. CorrelationId: {CorrelationId}, UserId: {UserId}, Amount: {Amount} {Currency}, Timestamp: {Timestamp}",
+                        thirdPartyTransaction.Id,
+                        thirdPartyTransaction.UserId,
+                        thirdPartyTransaction.Amount,
+                        thirdPartyTransaction.Currency,
+                        thirdPartyTransaction.CreatedAt);
+                }
+                catch (Exception ex)
+                {
+                    activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+                    activity?.AddException(ex);
+
+                    _logger.LogError(ex.Message);
+                }
             }
 
             await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);

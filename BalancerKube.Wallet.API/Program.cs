@@ -10,6 +10,16 @@ using BalancerKube.Common.Contracts;
 using BalancerKube.Wallet.API.Entities;
 using BalancerKube.Wallet.API.Abstraction;
 using BalancerKube.Wallet.API.Consumers;
+using BalancerKube.Wallet.API.Utilities;
+using MassTransit.Logging;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using MassTransit.Monitoring;
+using OpenTelemetry.Metrics;
+using BalancerKube.Common.Monitoring;
+using Npgsql;
+using Serilog.Enrichers.Span;
+using BalancerKube.Common.Telemetry;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +31,40 @@ builder.Services.AddScoped<IWalletService, WalletService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var telemetrySettings = builder.Configuration
+    .GetSection(nameof(TelemetrySettings))
+    .Get<TelemetrySettings>() ?? new();
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracingBuilder =>
+    {
+        tracingBuilder
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+                serviceName: RunTimeDiagnosticConfig.ServiceName,
+                serviceVersion: RunTimeDiagnosticConfig.ServiceVersion,
+                serviceInstanceId: RunTimeDiagnosticConfig.ServiceInstanceId))
+            .AddSource(RunTimeDiagnosticConfig.Source.Name)
+            .AddSource(DiagnosticHeaders.DefaultListenerName)
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddRedisInstrumentation()
+            .AddNpgsql()
+            .AddOtlpExporter(o => o.Endpoint = new Uri(telemetrySettings.TracesEndpoint));
+    })
+    .WithMetrics(metricProviderBuilder =>
+    {
+        metricProviderBuilder
+            .AddMeter(RunTimeDiagnosticConfig.Meter.Name, InstrumentationOptions.MeterName)
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+                serviceName: RunTimeDiagnosticConfig.ServiceName,
+                serviceVersion: RunTimeDiagnosticConfig.ServiceVersion,
+                serviceInstanceId: RunTimeDiagnosticConfig.ServiceInstanceId))
+            .AddRuntimeInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddAspNetCoreInstrumentation()
+            .AddOtlpExporter(o => o.Endpoint = new Uri(telemetrySettings.TracesEndpoint));
+    });
 
 var rabbitMqSettings = new RabbitMQSettings();
 builder.Configuration.GetSection("RabbitMQSettings").Bind(rabbitMqSettings);
@@ -59,6 +103,8 @@ builder.Services.AddMassTransit(x =>
             e.Consumer<TransactionCommandConsumer>(context);
         });
     });
+
+    x.AddOpenTelemetry();
 });
 
 var app = builder.Build();
@@ -129,12 +175,16 @@ app.MapPost("/api/user", async (CreateUserRequest request, ApplicationDbContext 
 
 try
 {
-    // FIx this
     Log.Logger = new LoggerConfiguration()
-        //.enrich.fromlogcontext()
-        //.enrich.withproperty("servicename", "walletservice")
-        //.enrich.withproperty("instanceid", environment.getenvironmentvariable("hostname"))
-        .WriteTo.Console()
+        .ReadFrom.Configuration(builder.Configuration)
+        .Enrich.WithProperty(nameof(RunTimeDiagnosticConfig.ServiceName), RunTimeDiagnosticConfig.ServiceName)
+        .Enrich.WithProperty(nameof(RunTimeDiagnosticConfig.ServiceInstanceId), RunTimeDiagnosticConfig.ServiceInstanceId)
+        .WriteTo.Sink(new SerilogOpenTelemetrySpanSink())
+        .WriteTo.OpenTelemetry(options =>
+        {
+            options.Endpoint = telemetrySettings.TracesEndpoint;
+            options.Protocol = Serilog.Sinks.OpenTelemetry.OtlpProtocol.HttpProtobuf;
+        })
         .CreateLogger();
 
     app.Run();

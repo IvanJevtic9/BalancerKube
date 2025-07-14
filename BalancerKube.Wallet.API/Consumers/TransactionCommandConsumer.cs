@@ -4,6 +4,8 @@ using BalancerKube.Common.Models;
 using BalancerKube.Wallet.API.Abstraction;
 using BalancerKube.Wallet.API.Exceptions;
 using BalancerKube.Wallet.API.Models.Request;
+using System.Diagnostics;
+using BalancerKube.Wallet.API.Utilities;
 
 namespace BalancerKube.Wallet.API.Consumers;
 
@@ -44,7 +46,14 @@ public class TransactionCommandConsumer : IConsumer<DepositFundsCommand>, IConsu
             return;
         }
 
+        using var activity = RunTimeDiagnosticConfig.Source.StartActivity("TransactionCommandProcessing");
+        activity?.SetTag("correlationId", context.Message.ThirdPartyTransactionId);
+
         var result = await ProcessTransaction(message);
+
+        var resultOutcome = result.IsSuccess ? "success" : "failure";
+
+        activity?.AddEvent(new ActivityEvent($"Transaction processed with {resultOutcome}"));
 
         _ = result.IsSuccess
             ? HandleSuccess(message, result.Value)
@@ -81,7 +90,7 @@ public class TransactionCommandConsumer : IConsumer<DepositFundsCommand>, IConsu
 
     private async Task HandleSuccess(ITransactionCommand command, Guid transactionId)
     {
-        _logger.LogWarning(
+        _logger.LogInformation(
             "Transaction processed successfully. CorrelationId: {CorrelationId}, UserId: {UserId}, Amount: {Amount} {Currency}, Timestamp: {Timestamp}",
             command.ThirdPartyTransactionId,
             command.UserId,
